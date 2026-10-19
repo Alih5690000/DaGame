@@ -3,6 +3,8 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <unordered_map>
+#define EM_LOG(x) emscripten_log(1, x)
 
 constexpr double RAD_TO_DEG = 180.0 / M_PI;
 
@@ -112,7 +114,7 @@ class Player:public Basic{
         Basic(s){
         rect=r;
     }
-    std::vector<Basic*> update(SDL_Renderer* r, float dt){
+    std::vector<Basic*> update(SDL_Renderer* r, float dt) override{
         int x,y;
         const Uint8* k=SDL_GetKeyboardState(NULL);
         if (k[SDL_SCANCODE_W]){
@@ -131,22 +133,43 @@ class Player:public Basic{
         SDL_RenderFillRectF(r, &rect);
         return {};
     }
+    void takedmg(int hp) override{
+        EM_LOG("Player took dmg");
+        emscripten_cancel_main_loop();
+    }
 };
 
 class Beam:public Basic{
     public:
+    float heatUp;
     float angle;
     float lifetime;
+    float damagetime;
     bool timerOn=true;
     bool damaging=true;
+    std::unordered_map<Basic*,float> guys;
     SDL_Texture* t;
-    Beam(float angle, std::vector<Basic*>& ss, float l, SDL_FRect r, SDL_Texture* tt):Basic(ss),lifetime(l){
+    Beam(float angle, std::vector<Basic*>& ss, float l, SDL_FRect r, SDL_Texture* tt, float h
+        , float d):Basic(ss),lifetime(l){
         rect=r;
         t=tt;
         this->angle = angle;
+        heatUp=h;
+        damagetime=d;
     }
     std::vector<Basic*> update(SDL_Renderer* r, float dt){
         SDL_FPoint center={0, rect.h/2};
+        if (heatUp>0.f){
+            SDL_SetTextureAlphaMod(t, 128);
+            SDL_RenderCopyExF(r, t, NULL, &rect,
+                angle*RAD_TO_DEG, &center, SDL_FLIP_NONE);
+            heatUp-=dt;
+            return {};
+        }
+        if (damaging){
+            damagetime-=dt;
+            if (damagetime<=0.f) damaging=false;
+        }
         if (timerOn){
             lifetime-=dt;
             if (lifetime<=0.f){
@@ -157,9 +180,21 @@ class Beam:public Basic{
         if (damaging)
             for (auto i:*sprites){
                 Rect ai=CreateRect(i->rect, 0);
-                Rect me=CreateRect(rect, angle);
-                if (intersects(ai, me)){
-                    takedmg(50);
+                Vec2 dir = {std::cos(angle), std::sin(angle)};
+                Rect me = {
+                    {
+                        rect.x + dir.x * rect.w / 2.0,
+                        rect.y + rect.h / 2.0 + dir.y * rect.w / 2.0
+                    },
+                    rect.w / 2.0,
+                    rect.h / 2.0,
+                    angle
+                };
+                if (intersects(ai, me) && i!=this &&
+                    (guys.find(i)==guys.end() || guys[i]<=0.f)){
+                    EM_LOG("Hit");
+                    i->takedmg(50);
+                    guys[i]=3.f;
                 }
             }
         SDL_SetTextureAlphaMod(t, 255);
@@ -175,10 +210,7 @@ class Turret:public Basic{
     const float CD=5.f;
     const float DMG=50;
     float cd=CD;
-    float wait=0.f;
-    bool waiting=false;
-    bool AfterShot=false;
-    float AfterShotCd=0.f;
+    float cool=0.f;
     float lastAngle;
     SDL_FRect lastRect;
     SDL_Texture* txt;
@@ -204,30 +236,31 @@ class Turret:public Basic{
             - (rect.y + rect.h / 2.f);
         float angle=SDL_atan2f(dy, dx);
         float dist=SDL_sqrtf(dx*dx+dy*dy);
-        SDL_FRect trail={rect.x, rect.y, dist, 10};
+        SDL_FRect trail = {
+            rect.x + rect.w / 2.f,
+            rect.y + rect.h / 2.f - 5.f,
+            dist,
+            10.f
+        };
         SDL_FPoint center={0, trail.h/2};
         cd-=dt;
-        if (AfterShot){
-            b->damaging=false;
-            AfterShotCd-=dt;
-            if (AfterShotCd<=0.f){
-                cd=CD;
-                AfterShot=false;
-            }
-            return {};
-        }
+        cool-=dt;
         if (cd>0){
-            SDL_SetTextureAlphaMod(txt, 128);
-            SDL_RenderCopyExF(r, txt, NULL, &trail,
-                angle*RAD_TO_DEG, &center, SDL_FLIP_NONE);
+            if (cool<=0.f){
+                SDL_SetTextureAlphaMod(txt, 128);
+                SDL_RenderCopyExF(r, txt, NULL, &trail,
+                    angle*RAD_TO_DEG, &center, SDL_FLIP_NONE);
+            }
         }
         else{
-            b=new Beam(angle, *sprites, 1.f, trail, txt);
+            lastAngle=angle;
+            lastRect=trail;
+            b=new Beam(lastAngle, *sprites, 1.f, lastRect, txt, 1.5f, 0.001f);
             p.push_back(b);
-            AfterShot=true;
-            AfterShotCd=1.f;
+            cd=CD;
+            cool=2.5f;
         }
-        return std::move(p);
+        return p;
     }
 };
 
