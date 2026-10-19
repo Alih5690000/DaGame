@@ -86,28 +86,86 @@ bool intersects(const Rect& a, const Rect& b) {
 class Basic{
     public:
     SDL_FRect rect;
+    bool active=true;
     int hp=100;
     std::vector<Basic*>* sprites;
     Basic(std::vector<Basic*>& s){
         sprites=&s;
     }
-    virtual void update(SDL_Renderer*, float dt)=0;
+    virtual void takedmg(int hp){
+        this->hp-=hp;
+    }
+    virtual std::vector<Basic*> update(SDL_Renderer*, float dt)=0;
+    virtual ~Basic()=default;
 };
 
 class Player:public Basic{
+    void move(float dx, float dy){
+        for (auto i:*sprites){
+            if (i==this) continue;
+            i->rect.x-=dx;
+            i->rect.y-=dy;
+        }
+    }
     public:
     Player(SDL_FRect r, std::vector<Basic*>& s):
         Basic(s){
         rect=r;
     }
-    void update(SDL_Renderer* r, float dt){
-        const Uint8* k=SDL_GetKeyboardState(NULL);
+    std::vector<Basic*> update(SDL_Renderer* r, float dt){
         int x,y;
-        Uint32 m=SDL_GetMouseState(&x, &y);
-        rect.x=x;
-        rect.y=y;
+        const Uint8* k=SDL_GetKeyboardState(NULL);
+        if (k[SDL_SCANCODE_W]){
+            move(0,-200*dt);
+        }
+        if (k[SDL_SCANCODE_A]){
+            move(-200*dt, 0);
+        }
+        if (k[SDL_SCANCODE_S]){
+            move(0,200*dt);
+        }
+        if (k[SDL_SCANCODE_D]){
+            move(200*dt, 0);
+        }
         SDL_SetRenderDrawColor(r, 255, 0, 0, 255);
         SDL_RenderFillRectF(r, &rect);
+        return {};
+    }
+};
+
+class Beam:public Basic{
+    public:
+    float angle;
+    float lifetime;
+    bool timerOn=true;
+    bool damaging=true;
+    SDL_Texture* t;
+    Beam(float angle, std::vector<Basic*>& ss, float l, SDL_FRect r, SDL_Texture* tt):Basic(ss),lifetime(l){
+        rect=r;
+        t=tt;
+        this->angle = angle;
+    }
+    std::vector<Basic*> update(SDL_Renderer* r, float dt){
+        SDL_FPoint center={0, rect.h/2};
+        if (timerOn){
+            lifetime-=dt;
+            if (lifetime<=0.f){
+                active=false;
+                return {};
+            }
+        }
+        if (damaging)
+            for (auto i:*sprites){
+                Rect ai=CreateRect(i->rect, 0);
+                Rect me=CreateRect(rect, angle);
+                if (intersects(ai, me)){
+                    takedmg(50);
+                }
+            }
+        SDL_SetTextureAlphaMod(t, 255);
+        SDL_RenderCopyExF(r, t, NULL, &rect,
+            angle*RAD_TO_DEG, &center, SDL_FLIP_NONE);
+        return {};
     }
 };
 
@@ -124,6 +182,7 @@ class Turret:public Basic{
     float lastAngle;
     SDL_FRect lastRect;
     SDL_Texture* txt;
+    Beam* b;
     Turret(Basic* target,  std::vector<Basic*>& s, SDL_FRect r,
         SDL_Renderer* re):
         t(target),Basic(s){
@@ -137,60 +196,38 @@ class Turret:public Basic{
         SDL_RenderClear(re);
         SDL_SetRenderTarget(re, prev);
     }
-    void update(SDL_Renderer* r, float dt){
+    std::vector<Basic*> update(SDL_Renderer* r, float dt){
+        std::vector<Basic*> p;
         float dx = (t->rect.x + t->rect.w / 2.f)
             - (rect.x + rect.w / 2.f);
         float dy = (t->rect.y + t->rect.h / 2.f)
             - (rect.y + rect.h / 2.f);
-        float angle=SDL_atan2f(dy, dx)*RAD_TO_DEG;
+        float angle=SDL_atan2f(dy, dx);
         float dist=SDL_sqrtf(dx*dx+dy*dy);
         SDL_FRect trail={rect.x, rect.y, dist, 10};
         SDL_FPoint center={0, trail.h/2};
         cd-=dt;
         if (AfterShot){
-            SDL_SetTextureAlphaMod(txt, 255);
-            SDL_RenderCopyExF(r, txt, NULL, &lastRect,
-                lastAngle, &center, SDL_FLIP_NONE);
+            b->damaging=false;
             AfterShotCd-=dt;
             if (AfterShotCd<=0.f){
                 cd=CD;
                 AfterShot=false;
             }
-            return;
-        }
-        if (waiting){
-            if (wait>0.f){
-                SDL_SetTextureAlphaMod(txt, 255);
-                SDL_RenderCopyExF(r, txt, NULL, &lastRect,
-                    lastAngle, &center, SDL_FLIP_NONE);
-                wait-=dt;
-            }
-            else{
-                SDL_SetTextureAlphaMod(txt, 255);
-                SDL_RenderCopyExF(r, txt, NULL, &lastRect,
-                    lastAngle, &center, SDL_FLIP_NONE);
-                Rect shot=CreateRect(lastRect, lastAngle*RAD_TO_DEG);
-                Rect target=CreateRect(t->rect, 0);
-                if (intersects(shot, target)){
-                    t->hp-=DMG;
-                }
-                AfterShot=true;
-                AfterShotCd=1.f;
-                waiting=false;
-            }
-            return;
+            return {};
         }
         if (cd>0){
             SDL_SetTextureAlphaMod(txt, 128);
             SDL_RenderCopyExF(r, txt, NULL, &trail,
-                angle, &center, SDL_FLIP_NONE);
+                angle*RAD_TO_DEG, &center, SDL_FLIP_NONE);
         }
         else{
-            lastAngle=angle;
-            lastRect=trail;
-            waiting=true;
-            wait=1.f;
+            b=new Beam(angle, *sprites, 1.f, trail, txt);
+            p.push_back(b);
+            AfterShot=true;
+            AfterShotCd=1.f;
         }
+        return std::move(p);
     }
 };
 
@@ -213,8 +250,20 @@ void loop(){
     }
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
+    std::vector<Basic*> n;
+    std::vector<Basic*> pending;
     for (auto i:ss){
-        i->update(renderer, dt);
+        auto k=i->update(renderer, dt);
+        for (auto j:k){
+            pending.push_back(j);
+        }
+        if (i->active){
+            n.push_back(i);
+        }
+    }
+    ss=n;
+    for (auto i:pending){
+        ss.push_back(i);
     }
     SDL_RenderPresent(renderer);
 }
@@ -226,7 +275,7 @@ int main(){
         1000, 800, SDL_WINDOW_SHOWN);
     renderer=SDL_CreateRenderer(window, -1, 
         SDL_RENDERER_ACCELERATED);
-    ss.push_back(new Player({0,0,100,100}, ss));
+    ss.push_back(new Player({1000/2,800/2,100,100}, ss));
     ss.push_back(new Turret(ss[0], ss, {500,500,100,100},
         renderer));
     emscripten_set_main_loop(loop, -1, 1);
