@@ -167,8 +167,8 @@ class Beam:public Basic{
             return {};
         }
         if (damaging){
-            damagetime-=dt;
             if (damagetime<=0.f) damaging=false;
+            damagetime-=dt;
         }
         if (timerOn){
             lifetime-=dt;
