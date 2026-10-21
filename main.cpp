@@ -112,6 +112,10 @@ class Basic{
             }   
         }
     }
+    void HandleX(int x){
+        bool p=x>0;
+        HandleX(p);
+    }
     void HandleY(bool positive){
         for (auto i:*sprites){
             if (i->collidable && collidable && SDL_HasIntersectionF(&rect, &i->rect)){
@@ -124,14 +128,44 @@ class Basic{
             }   
         }
     }
+    void HandleY(int y){
+        bool p=y>0;
+        HandleY(p);
+    }
 };
 
 class Player:public Basic{
     void move(float dx, float dy){
+        std::vector<Basic*> moved;
+        float offX=0, offY=0;
         for (auto i:*sprites){
+            moved.push_back(i);
             if (i==this) continue;
             i->rect.x-=dx;
+            if (SDL_HasIntersectionF(&rect, &i->rect)){
+                if (dx>0){
+                    offX=i->rect.x+i->rect.w-rect.x;
+                }
+                else if(dx<0){
+                    offX=i->rect.x-rect.x-rect.w;
+                }
+                goto end;
+            }
             i->rect.y-=dy;
+            if (SDL_HasIntersectionF(&rect, &i->rect)){
+                if (dy>0){
+                    offY=i->rect.y+i->rect.h-rect.y;
+                }
+                else if(dy<0){
+                    offY=i->rect.y-rect.y-rect.h;
+                }
+                goto end;
+            }
+        }
+        end:
+        for (auto i:moved){
+            i->rect.x+=offX;
+            i->rect.y+=offY;
         }
     }
     public:
@@ -145,19 +179,15 @@ class Player:public Basic{
         const Uint8* k=SDL_GetKeyboardState(NULL);
         if (k[SDL_SCANCODE_W]){
             move(0,-200*dt);
-            HandleY(false);
         }
         if (k[SDL_SCANCODE_A]){
             move(-200*dt, 0);
-            HandleX(false);
         }
         if (k[SDL_SCANCODE_S]){
             move(0,200*dt);
-            HandleY(true);
         }
         if (k[SDL_SCANCODE_D]){
             move(200*dt, 0);
-            HandleX(true);
         }
         SDL_SetRenderDrawColor(r, 255, 0, 0, 255);
         SDL_RenderFillRectF(r, &rect);
@@ -166,6 +196,20 @@ class Player:public Basic{
     void takedmg(int hp) override{
         EM_LOG("Player took dmg");
         emscripten_cancel_main_loop();
+    }
+};
+
+class Brick:public Basic{
+    public:
+    Brick(SDL_FRect r, std::vector<Basic*>& s):
+        Basic(s){
+        rect=r;
+        collidable=true;
+    }
+    std::vector<Basic*> update(SDL_Renderer* r, float dt) override{
+        SDL_SetRenderDrawColor(r, 0, 255, 0, 255);
+        SDL_RenderFillRectF(r, &rect);
+        return {};
     }
 };
 
@@ -341,5 +385,6 @@ int main(){
     ss.push_back(new Player({1000/2,800/2,100,100}, ss));
     ss.push_back(new Turret(ss[0], ss, {500,500,100,100},
         renderer));
+    ss.push_back(new Brick({300,300,100,100}, ss));
     emscripten_set_main_loop(loop, -1, 1);
 }
