@@ -89,6 +89,7 @@ class Basic{
     public:
     SDL_FRect rect;
     bool active=true;
+    bool collidable=false;
     int hp=100;
     std::vector<Basic*>* sprites;
     Basic(std::vector<Basic*>& s){
@@ -99,6 +100,30 @@ class Basic{
     }
     virtual std::vector<Basic*> update(SDL_Renderer*, float dt)=0;
     virtual ~Basic()=default;
+    void HandleX(bool positive){
+        for (auto i:*sprites){
+            if (i->collidable && collidable && SDL_HasIntersectionF(&rect, &i->rect)){
+                if (positive){
+                    rect.x=i->rect.x-i->rect.w;
+                }
+                else{
+                    rect.x=i->rect.x+i->rect.w;
+                }
+            }   
+        }
+    }
+    void HandleY(bool positive){
+        for (auto i:*sprites){
+            if (i->collidable && collidable && SDL_HasIntersectionF(&rect, &i->rect)){
+                if (positive){
+                    rect.y=i->rect.y-i->rect.h;
+                }
+                else{
+                    rect.y=i->rect.y+i->rect.h;
+                }
+            }   
+        }
+    }
 };
 
 class Player:public Basic{
@@ -113,21 +138,26 @@ class Player:public Basic{
     Player(SDL_FRect r, std::vector<Basic*>& s):
         Basic(s){
         rect=r;
+        collidable=true;
     }
     std::vector<Basic*> update(SDL_Renderer* r, float dt) override{
         int x,y;
         const Uint8* k=SDL_GetKeyboardState(NULL);
         if (k[SDL_SCANCODE_W]){
             move(0,-200*dt);
+            HandleY(false);
         }
         if (k[SDL_SCANCODE_A]){
             move(-200*dt, 0);
+            HandleX(false);
         }
         if (k[SDL_SCANCODE_S]){
             move(0,200*dt);
+            HandleY(true);
         }
         if (k[SDL_SCANCODE_D]){
             move(200*dt, 0);
+            HandleX(true);
         }
         SDL_SetRenderDrawColor(r, 255, 0, 0, 255);
         SDL_RenderFillRectF(r, &rect);
