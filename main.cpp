@@ -139,25 +139,25 @@ class Player:public Basic{
         std::vector<Basic*> moved;
         float offX=0, offY=0;
         for (auto i:*sprites){
-            moved.push_back(i);
             if (i==this) continue;
+            moved.push_back(i);
             i->rect.x-=dx;
             if (SDL_HasIntersectionF(&rect, &i->rect)){
                 if (dx>0){
-                    offX=i->rect.x+i->rect.w-rect.x;
+                    offX=(rect.x+rect.w)-i->rect.x;
                 }
                 else if(dx<0){
-                    offX=i->rect.x-rect.x-rect.w;
+                    offX=rect.x-(i->rect.x+i->rect.w);
                 }
                 goto end;
             }
             i->rect.y-=dy;
             if (SDL_HasIntersectionF(&rect, &i->rect)){
                 if (dy>0){
-                    offY=i->rect.y+i->rect.h-rect.y;
+                    offY=(rect.y+rect.h)-i->rect.y;
                 }
                 else if(dy<0){
-                    offY=i->rect.y-rect.y-rect.h;
+                    offY=rect.y-(i->rect.y+i->rect.h);
                 }
                 goto end;
             }
