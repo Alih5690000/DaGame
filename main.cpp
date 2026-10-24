@@ -132,6 +132,9 @@ class Basic{
         bool p=y>0;
         HandleY(p);
     }
+    virtual void WhenParried(Basic*){
+        
+    }
 };
 
 class Player:public Basic{
@@ -375,6 +378,13 @@ void loop(){
     SDL_RenderPresent(renderer);
 }
 
+void Init1(){
+    ss.push_back(new Player({1000/2,800/2,100,100}, ss));
+    ss.push_back(new Turret(ss[0], ss, {500,500,100,100},
+        renderer));
+    ss.push_back(new Brick({300,300,100,100}, ss));
+}
+
 int main(){
     SDL_Init(SDL_INIT_EVERYTHING);
     window=SDL_CreateWindow("Game", 
@@ -382,9 +392,6 @@ int main(){
         1000, 800, SDL_WINDOW_SHOWN);
     renderer=SDL_CreateRenderer(window, -1, 
         SDL_RENDERER_ACCELERATED);
-    ss.push_back(new Player({1000/2,800/2,100,100}, ss));
-    ss.push_back(new Turret(ss[0], ss, {500,500,100,100},
-        renderer));
-    ss.push_back(new Brick({300,300,100,100}, ss));
+    Init1();
     emscripten_set_main_loop(loop, -1, 1);
 }
