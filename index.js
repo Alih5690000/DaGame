@@ -8957,7 +8957,7 @@ function checkIncomingModuleAPI() {
 }
 
 var ASM_CONSTS = {
-  147576: $0 => {
+  147624: $0 => {
     var str = UTF8ToString($0) + "\n\n" + "Abort/Retry/Ignore/AlwaysIgnore? [ariA] :";
     var reply = window.prompt(str, "i");
     if (reply === null) {
@@ -8965,7 +8965,7 @@ var ASM_CONSTS = {
     }
     return reply.length === 1 ? reply.charCodeAt(0) : -1;
   },
-  147791: () => {
+  147839: () => {
     if (typeof (AudioContext) !== "undefined") {
       return true;
     } else if (typeof (webkitAudioContext) !== "undefined") {
@@ -8973,7 +8973,7 @@ var ASM_CONSTS = {
     }
     return false;
   },
-  147938: () => {
+  147986: () => {
     if ((typeof (navigator.mediaDevices) !== "undefined") && (typeof (navigator.mediaDevices.getUserMedia) !== "undefined")) {
       return true;
     } else if (typeof (navigator.webkitGetUserMedia) !== "undefined") {
@@ -8981,7 +8981,7 @@ var ASM_CONSTS = {
     }
     return false;
   },
-  148172: $0 => {
+  148220: $0 => {
     if (typeof (Module["SDL2"]) === "undefined") {
       Module["SDL2"] = {};
     }
@@ -9005,11 +9005,11 @@ var ASM_CONSTS = {
     }
     return SDL2.audioContext === undefined ? -1 : 0;
   },
-  148724: () => {
+  148772: () => {
     var SDL2 = Module["SDL2"];
     return SDL2.audioContext.sampleRate;
   },
-  148792: ($0, $1, $2, $3) => {
+  148840: ($0, $1, $2, $3) => {
     var SDL2 = Module["SDL2"];
     var have_microphone = function(stream) {
       if (SDL2.capture.silenceTimer !== undefined) {
@@ -9051,7 +9051,7 @@ var ASM_CONSTS = {
       }, have_microphone, no_microphone);
     }
   },
-  150485: ($0, $1, $2, $3) => {
+  150533: ($0, $1, $2, $3) => {
     var SDL2 = Module["SDL2"];
     SDL2.audio.scriptProcessorNode = SDL2.audioContext["createScriptProcessor"]($1, 0, $0);
     SDL2.audio.scriptProcessorNode["onaudioprocess"] = function(e) {
@@ -9083,7 +9083,7 @@ var ASM_CONSTS = {
       SDL2.audio.silenceTimer = setInterval(silence_callback, ($1 / SDL2.audioContext.sampleRate) * 1e3);
     }
   },
-  151660: ($0, $1) => {
+  151708: ($0, $1) => {
     var SDL2 = Module["SDL2"];
     var numChannels = SDL2.capture.currentCaptureBuffer.numberOfChannels;
     for (var c = 0; c < numChannels; ++c) {
@@ -9102,7 +9102,7 @@ var ASM_CONSTS = {
       }
     }
   },
-  152265: ($0, $1) => {
+  152313: ($0, $1) => {
     var SDL2 = Module["SDL2"];
     var buf = $0 >>> 2;
     var numChannels = SDL2.audio.currentOutputBuffer["numberOfChannels"];
@@ -9116,7 +9116,7 @@ var ASM_CONSTS = {
       }
     }
   },
-  152754: $0 => {
+  152802: $0 => {
     var SDL2 = Module["SDL2"];
     if ($0) {
       if (SDL2.capture.silenceTimer !== undefined) {
@@ -9150,7 +9150,7 @@ var ASM_CONSTS = {
       SDL2.audioContext = undefined;
     }
   },
-  153760: ($0, $1, $2) => {
+  153808: ($0, $1, $2) => {
     var w = $0;
     var h = $1;
     var pixels = $2;
@@ -9221,7 +9221,7 @@ var ASM_CONSTS = {
     }
     SDL2.ctx.putImageData(SDL2.image, 0, 0);
   },
-  155226: ($0, $1, $2, $3, $4) => {
+  155274: ($0, $1, $2, $3, $4) => {
     var w = $0;
     var h = $1;
     var hot_x = $2;
@@ -9258,18 +9258,18 @@ var ASM_CONSTS = {
     stringToUTF8(url, urlBuf, url.length + 1);
     return urlBuf;
   },
-  156214: $0 => {
+  156262: $0 => {
     if (Module["canvas"]) {
       Module["canvas"].style["cursor"] = UTF8ToString($0);
     }
   },
-  156297: () => {
+  156345: () => {
     if (Module["canvas"]) {
       Module["canvas"].style["cursor"] = "none";
     }
   },
-  156366: () => window.innerWidth,
-  156396: () => window.innerHeight
+  156414: () => window.innerWidth,
+  156444: () => window.innerHeight
 };
 
 // Imports from the Wasm binary.
@@ -9639,6 +9639,7 @@ var wasmImports = {
   /** @export */ invoke_iiiiiii,
   /** @export */ invoke_v,
   /** @export */ invoke_vi,
+  /** @export */ invoke_viff,
   /** @export */ invoke_vii,
   /** @export */ invoke_viii,
   /** @export */ invoke_viiif,
@@ -9716,6 +9717,17 @@ function invoke_ii(index, a1) {
   var sp = stackSave();
   try {
     return getWasmTableEntry(index)(a1);
+  } catch (e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_viff(index, a1, a2, a3) {
+  var sp = stackSave();
+  try {
+    getWasmTableEntry(index)(a1, a2, a3);
   } catch (e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;
