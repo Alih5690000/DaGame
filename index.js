@@ -72,7 +72,7 @@ var ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIR
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
-// include: C:\Users\120606~1\AppData\Local\Temp\tmpzi7la581.js
+// include: C:\Users\120606~1\AppData\Local\Temp\tmpk_4pua1b.js
 if (!Module["expectedDataFileDownloads"]) Module["expectedDataFileDownloads"] = 0;
 
 Module["expectedDataFileDownloads"]++;
@@ -196,23 +196,23 @@ Module["expectedDataFileDownloads"]++;
   });
 })();
 
-// end include: C:\Users\120606~1\AppData\Local\Temp\tmpzi7la581.js
-// include: C:\Users\120606~1\AppData\Local\Temp\tmpw74imcer.js
+// end include: C:\Users\120606~1\AppData\Local\Temp\tmpk_4pua1b.js
+// include: C:\Users\120606~1\AppData\Local\Temp\tmp9lwv88uo.js
 // All the pre-js content up to here must remain later on, we need to run
 // it.
 if ((typeof ENVIRONMENT_IS_WASM_WORKER != "undefined" && ENVIRONMENT_IS_WASM_WORKER) || (typeof ENVIRONMENT_IS_PTHREAD != "undefined" && ENVIRONMENT_IS_PTHREAD) || (typeof ENVIRONMENT_IS_AUDIO_WORKLET != "undefined" && ENVIRONMENT_IS_AUDIO_WORKLET)) Module["preRun"] = [];
 
 var necessaryPreJSTasks = Module["preRun"].slice();
 
-// end include: C:\Users\120606~1\AppData\Local\Temp\tmpw74imcer.js
-// include: C:\Users\120606~1\AppData\Local\Temp\tmpx724_b5u.js
+// end include: C:\Users\120606~1\AppData\Local\Temp\tmp9lwv88uo.js
+// include: C:\Users\120606~1\AppData\Local\Temp\tmpv_89_0hb.js
 if (!Module["preRun"]) throw "Module.preRun should exist because file support used it; did a pre-js delete it?";
 
 necessaryPreJSTasks.forEach(task => {
   if (Module["preRun"].indexOf(task) < 0) throw "All preRun tasks that exist before user pre-js code should remain after; did you replace Module or modify Module.preRun?";
 });
 
-// end include: C:\Users\120606~1\AppData\Local\Temp\tmpx724_b5u.js
+// end include: C:\Users\120606~1\AppData\Local\Temp\tmpv_89_0hb.js
 var programArgs = [];
 
 var thisProgram = "./this.program";
@@ -8957,7 +8957,7 @@ function checkIncomingModuleAPI() {
 }
 
 var ASM_CONSTS = {
-  147624: $0 => {
+  147720: $0 => {
     var str = UTF8ToString($0) + "\n\n" + "Abort/Retry/Ignore/AlwaysIgnore? [ariA] :";
     var reply = window.prompt(str, "i");
     if (reply === null) {
@@ -8965,7 +8965,7 @@ var ASM_CONSTS = {
     }
     return reply.length === 1 ? reply.charCodeAt(0) : -1;
   },
-  147839: () => {
+  147935: () => {
     if (typeof (AudioContext) !== "undefined") {
       return true;
     } else if (typeof (webkitAudioContext) !== "undefined") {
@@ -8973,7 +8973,7 @@ var ASM_CONSTS = {
     }
     return false;
   },
-  147986: () => {
+  148082: () => {
     if ((typeof (navigator.mediaDevices) !== "undefined") && (typeof (navigator.mediaDevices.getUserMedia) !== "undefined")) {
       return true;
     } else if (typeof (navigator.webkitGetUserMedia) !== "undefined") {
@@ -8981,7 +8981,7 @@ var ASM_CONSTS = {
     }
     return false;
   },
-  148220: $0 => {
+  148316: $0 => {
     if (typeof (Module["SDL2"]) === "undefined") {
       Module["SDL2"] = {};
     }
@@ -9005,11 +9005,11 @@ var ASM_CONSTS = {
     }
     return SDL2.audioContext === undefined ? -1 : 0;
   },
-  148772: () => {
+  148868: () => {
     var SDL2 = Module["SDL2"];
     return SDL2.audioContext.sampleRate;
   },
-  148840: ($0, $1, $2, $3) => {
+  148936: ($0, $1, $2, $3) => {
     var SDL2 = Module["SDL2"];
     var have_microphone = function(stream) {
       if (SDL2.capture.silenceTimer !== undefined) {
@@ -9051,7 +9051,7 @@ var ASM_CONSTS = {
       }, have_microphone, no_microphone);
     }
   },
-  150533: ($0, $1, $2, $3) => {
+  150629: ($0, $1, $2, $3) => {
     var SDL2 = Module["SDL2"];
     SDL2.audio.scriptProcessorNode = SDL2.audioContext["createScriptProcessor"]($1, 0, $0);
     SDL2.audio.scriptProcessorNode["onaudioprocess"] = function(e) {
@@ -9083,7 +9083,7 @@ var ASM_CONSTS = {
       SDL2.audio.silenceTimer = setInterval(silence_callback, ($1 / SDL2.audioContext.sampleRate) * 1e3);
     }
   },
-  151708: ($0, $1) => {
+  151804: ($0, $1) => {
     var SDL2 = Module["SDL2"];
     var numChannels = SDL2.capture.currentCaptureBuffer.numberOfChannels;
     for (var c = 0; c < numChannels; ++c) {
@@ -9102,7 +9102,7 @@ var ASM_CONSTS = {
       }
     }
   },
-  152313: ($0, $1) => {
+  152409: ($0, $1) => {
     var SDL2 = Module["SDL2"];
     var buf = $0 >>> 2;
     var numChannels = SDL2.audio.currentOutputBuffer["numberOfChannels"];
@@ -9116,7 +9116,7 @@ var ASM_CONSTS = {
       }
     }
   },
-  152802: $0 => {
+  152898: $0 => {
     var SDL2 = Module["SDL2"];
     if ($0) {
       if (SDL2.capture.silenceTimer !== undefined) {
@@ -9150,7 +9150,7 @@ var ASM_CONSTS = {
       SDL2.audioContext = undefined;
     }
   },
-  153808: ($0, $1, $2) => {
+  153904: ($0, $1, $2) => {
     var w = $0;
     var h = $1;
     var pixels = $2;
@@ -9221,7 +9221,7 @@ var ASM_CONSTS = {
     }
     SDL2.ctx.putImageData(SDL2.image, 0, 0);
   },
-  155274: ($0, $1, $2, $3, $4) => {
+  155370: ($0, $1, $2, $3, $4) => {
     var w = $0;
     var h = $1;
     var hot_x = $2;
@@ -9258,18 +9258,18 @@ var ASM_CONSTS = {
     stringToUTF8(url, urlBuf, url.length + 1);
     return urlBuf;
   },
-  156262: $0 => {
+  156358: $0 => {
     if (Module["canvas"]) {
       Module["canvas"].style["cursor"] = UTF8ToString($0);
     }
   },
-  156345: () => {
+  156441: () => {
     if (Module["canvas"]) {
       Module["canvas"].style["cursor"] = "none";
     }
   },
-  156414: () => window.innerWidth,
-  156444: () => window.innerHeight
+  156510: () => window.innerWidth,
+  156540: () => window.innerHeight
 };
 
 // Imports from the Wasm binary.
@@ -9639,8 +9639,10 @@ var wasmImports = {
   /** @export */ invoke_iiiiiii,
   /** @export */ invoke_v,
   /** @export */ invoke_vi,
+  /** @export */ invoke_vif,
   /** @export */ invoke_viff,
   /** @export */ invoke_vii,
+  /** @export */ invoke_viiff,
   /** @export */ invoke_viii,
   /** @export */ invoke_viiif,
   /** @export */ invoke_viiii,
@@ -9717,6 +9719,28 @@ function invoke_ii(index, a1) {
   var sp = stackSave();
   try {
     return getWasmTableEntry(index)(a1);
+  } catch (e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_viiff(index, a1, a2, a3, a4) {
+  var sp = stackSave();
+  try {
+    getWasmTableEntry(index)(a1, a2, a3, a4);
+  } catch (e) {
+    stackRestore(sp);
+    if (!(e instanceof EmscriptenEH)) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_vif(index, a1, a2) {
+  var sp = stackSave();
+  try {
+    getWasmTableEntry(index)(a1, a2);
   } catch (e) {
     stackRestore(sp);
     if (!(e instanceof EmscriptenEH)) throw e;

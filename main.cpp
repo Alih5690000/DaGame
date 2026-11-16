@@ -151,8 +151,8 @@ public:
         bool p = y > 0;
         HandleY(p);
     }
-    virtual void WhenParried(Basic*){
-        
+    virtual void WhenParried(Basic *)
+    {
     }
 };
 
@@ -179,7 +179,7 @@ public:
         }
         for (auto i : *sprites)
         {
-            if (i==shoo || !i->collidable)
+            if (i == shoo || !i->collidable)
                 continue;
             if (SDL_HasIntersectionF(&rect, &i->rect))
             {
@@ -193,8 +193,61 @@ public:
     }
 };
 
+class Weapon
+{
+public:
+    Basic *owner;
+    Weapon(Basic *o) : owner(o) {}
+    virtual std::vector<Basic*> shoot(float x, float y) = 0;
+    virtual void reload() = 0;
+    virtual void update(float dt) = 0;
+};
+
+class Gun : public Weapon
+{
+    using Weapon::Weapon;
+    void reload() override{
+
+    }
+    void update(float dt) override{
+
+    }
+    std::vector<Basic*> shoot(float x, float y) override
+    {
+        std::vector<Basic *> res;
+        float px = owner->rect.x + owner->rect.w / 2.0f;
+        float py = owner->rect.y + owner->rect.h / 2.0f;
+
+        float dx = x - px;
+        float dy = y - py;
+
+        float len = std::sqrt(dx * dx + dy * dy);
+
+        if (len > 0.0f)
+        {
+            dx /= len;
+            dy /= len;
+
+            SDL_FRect bulletRect = {
+                px - 5.0f,
+                py - 5.0f,
+                10.0f,
+                10.0f};
+
+            res.push_back(new Bullet(
+                *owner->sprites,
+                dx * 600.0f,
+                dy * 600.0f,
+                bulletRect,
+                2.0f, owner));
+        }
+        return res;
+    }
+};
+
 class Player : public Basic
 {
+    Weapon* gun=new Gun(this);
     void move(float dx, float dy)
     {
         std::vector<Basic *> moved;
@@ -253,33 +306,12 @@ public:
         Uint32 m = SDL_GetMouseState(&x, &y);
         if (m & SDL_BUTTON_LMASK)
         {
-            float px = rect.x + rect.w / 2.0f;
-            float py = rect.y + rect.h / 2.0f;
-
-            float dx = x - px;
-            float dy = y - py;
-
-            float len = std::sqrt(dx * dx + dy * dy);
-
-            if (len > 0.0f)
-            {
-                dx /= len;
-                dy /= len;
-
-                SDL_FRect bulletRect = {
-                    px - 5.0f,
-                    py - 5.0f,
-                    10.0f,
-                    10.0f};
-
-                res.push_back(new Bullet(
-                    *sprites,
-                    dx * 600.0f,
-                    dy * 600.0f,
-                    bulletRect,
-                    2.0f, this));
+            auto ne=gun->shoot(x, y);
+            for (auto i:ne){
+                res.push_back(i);
             }
         }
+        gun->update(dt);
         if (k[SDL_SCANCODE_W])
         {
             move(0, -200 * dt);
@@ -334,12 +366,12 @@ public:
     bool damaging = true;
     std::unordered_map<Basic *, float> guys;
     SDL_Texture *t;
-    bool* f;
-    Beam(float angle, std::vector<Basic *> &ss, float l, SDL_FRect r, SDL_Texture *tt, float h, float d, bool* f) : Basic(ss), lifetime(l)
+    bool *f;
+    Beam(float angle, std::vector<Basic *> &ss, float l, SDL_FRect r, SDL_Texture *tt, float h, float d, bool *f) : Basic(ss), lifetime(l)
     {
         rect = r;
         t = tt;
-        this->f=f;
+        this->f = f;
         this->angle = angle;
         heatUp = h;
         damagetime = d;
@@ -395,8 +427,9 @@ public:
                           angle * RAD_TO_DEG, &center, SDL_FLIP_NONE);
         return {};
     }
-    ~Beam(){
-        *f=true;
+    ~Beam()
+    {
+        *f = true;
     }
 };
 
@@ -412,7 +445,7 @@ public:
     SDL_FRect lastRect;
     SDL_Texture *txt;
     Beam *b;
-    bool dead=false;
+    bool dead = false;
     Turret(Basic *target, std::vector<Basic *> &s, SDL_FRect r,
            SDL_Renderer *re) : t(target), Basic(s)
     {
@@ -425,6 +458,7 @@ public:
         SDL_SetRenderDrawColor(re, 255, 255, 0, 255);
         SDL_RenderClear(re);
         SDL_SetRenderTarget(re, prev);
+        collidable=true;
     }
     std::vector<Basic *> update(SDL_Renderer *r, float dt)
     {
@@ -454,7 +488,7 @@ public:
         {
             lastAngle = angle;
             lastRect = trail;
-            dead=false;
+            dead = false;
             b = new Beam(lastAngle, *sprites, 1.f, lastRect, txt, 1.5f, 0.001f, &dead);
             p.push_back(b);
             cd = CD;
@@ -462,9 +496,10 @@ public:
         }
         return p;
     }
-    ~Turret(){
+    ~Turret()
+    {
         if (!dead)
-            b->active=false;
+            b->active = false;
     }
 };
 
@@ -512,20 +547,22 @@ void loop()
     SDL_RenderPresent(renderer);
 }
 
-void Init1(){
-    ss.push_back(new Player({1000/2,800/2,100,100}, ss));
-    ss.push_back(new Turret(ss[0], ss, {500,500,100,100},
-        renderer));
-    ss.push_back(new Brick({300,300,100,100}, ss));
+void Init1()
+{
+    ss.push_back(new Player({1000 / 2, 800 / 2, 100, 100}, ss));
+    ss.push_back(new Turret(ss[0], ss, {500, 500, 100, 100},
+                            renderer));
+    ss.push_back(new Brick({300, 300, 100, 100}, ss));
 }
 
-int main(){
+int main()
+{
     SDL_Init(SDL_INIT_EVERYTHING);
-    window=SDL_CreateWindow("Game", 
-        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        1000, 800, SDL_WINDOW_SHOWN);
-    renderer=SDL_CreateRenderer(window, -1, 
-        SDL_RENDERER_ACCELERATED);
+    window = SDL_CreateWindow("Game",
+                              SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                              1000, 800, SDL_WINDOW_SHOWN);
+    renderer = SDL_CreateRenderer(window, -1,
+                                  SDL_RENDERER_ACCELERATED);
     Init1();
     emscripten_set_main_loop(loop, -1, 1);
 }
