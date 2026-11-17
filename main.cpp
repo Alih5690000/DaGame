@@ -102,6 +102,16 @@ public:
     {
         sprites = &s;
     }
+    SDL_FRect GetPartyHitbox(float coefficient = 1.5f) const
+    {
+        const float widthIncrease = rect.w * (coefficient - 1.0f) / 2.0f;
+        const float heightIncrease = rect.h * (coefficient - 1.0f) / 2.0f;
+        return {
+            rect.x - widthIncrease,
+            rect.y - heightIncrease,
+            rect.w * coefficient,
+            rect.h * coefficient};
+    }
     virtual void takedmg(int hp)
     {
         this->hp -= hp;
