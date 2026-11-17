@@ -102,7 +102,7 @@ public:
     {
         sprites = &s;
     }
-    SDL_FRect GetPartyHitbox(float coefficient = 1.5f) const
+    SDL_FRect GetParryHitbox(float coefficient = 1.5f) const
     {
         const float widthIncrease = rect.w * (coefficient - 1.0f) / 2.0f;
         const float heightIncrease = rect.h * (coefficient - 1.0f) / 2.0f;
