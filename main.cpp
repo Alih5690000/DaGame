@@ -4,6 +4,7 @@
 #include <cmath>
 #include <algorithm>
 #include <unordered_map>
+#include <functional>
 #define EM_LOG(x) emscripten_log(1, x)
 
 constexpr double RAD_TO_DEG = 180.0 / M_PI;
@@ -107,20 +108,35 @@ public:
     }
     virtual std::vector<Basic *> update(SDL_Renderer *, float dt) = 0;
     virtual ~Basic() = default;
+    virtual void CallbackX(bool positive, Basic *i)
+    {
+        if (positive)
+        {
+            rect.x = i->rect.x - i->rect.w;
+        }
+        else
+        {
+            rect.x = i->rect.x + i->rect.w;
+        }
+    }
+    virtual void CallbackY(bool positive, Basic *i)
+    {
+        if (positive)
+        {
+            rect.y = i->rect.y - i->rect.h;
+        }
+        else
+        {
+            rect.y = i->rect.y + i->rect.h;
+        }
+    }
     void HandleX(bool positive)
     {
         for (auto i : *sprites)
         {
             if (i->collidable && collidable && SDL_HasIntersectionF(&rect, &i->rect))
             {
-                if (positive)
-                {
-                    rect.x = i->rect.x - i->rect.w;
-                }
-                else
-                {
-                    rect.x = i->rect.x + i->rect.w;
-                }
+                CallbackX(positive, i);
             }
         }
     }
@@ -135,14 +151,7 @@ public:
         {
             if (i->collidable && collidable && SDL_HasIntersectionF(&rect, &i->rect))
             {
-                if (positive)
-                {
-                    rect.y = i->rect.y - i->rect.h;
-                }
-                else
-                {
-                    rect.y = i->rect.y + i->rect.h;
-                }
+                CallbackY(positive, i);
             }
         }
     }
@@ -198,7 +207,7 @@ class Weapon
 public:
     Basic *owner;
     Weapon(Basic *o) : owner(o) {}
-    virtual std::vector<Basic*> shoot(float x, float y) = 0;
+    virtual std::vector<Basic *> shoot(float x, float y) = 0;
     virtual void reload() = 0;
     virtual void update(float dt) = 0;
 };
@@ -206,13 +215,13 @@ public:
 class Gun : public Weapon
 {
     using Weapon::Weapon;
-    void reload() override{
-
+    void reload() override
+    {
     }
-    void update(float dt) override{
-
+    void update(float dt) override
+    {
     }
-    std::vector<Basic*> shoot(float x, float y) override
+    std::vector<Basic *> shoot(float x, float y) override
     {
         std::vector<Basic *> res;
         float px = owner->rect.x + owner->rect.w / 2.0f;
@@ -247,7 +256,7 @@ class Gun : public Weapon
 
 class Player : public Basic
 {
-    Weapon* gun=new Gun(this);
+    Weapon *gun = new Gun(this);
     void move(float dx, float dy)
     {
         std::vector<Basic *> moved;
@@ -306,8 +315,9 @@ public:
         Uint32 m = SDL_GetMouseState(&x, &y);
         if (m & SDL_BUTTON_LMASK)
         {
-            auto ne=gun->shoot(x, y);
-            for (auto i:ne){
+            auto ne = gun->shoot(x, y);
+            for (auto i : ne)
+            {
                 res.push_back(i);
             }
         }
@@ -372,6 +382,7 @@ public:
         rect = r;
         t = tt;
         this->f = f;
+        *f=false;
         this->angle = angle;
         heatUp = h;
         damagetime = d;
@@ -458,7 +469,7 @@ public:
         SDL_SetRenderDrawColor(re, 255, 255, 0, 255);
         SDL_RenderClear(re);
         SDL_SetRenderTarget(re, prev);
-        collidable=true;
+        collidable = true;
     }
     std::vector<Basic *> update(SDL_Renderer *r, float dt)
     {
@@ -537,6 +548,9 @@ void loop()
         if (i->active)
         {
             n.push_back(i);
+        }
+        else{
+            delete i;
         }
     }
     ss = n;
