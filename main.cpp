@@ -93,6 +93,7 @@ bool intersects(const Rect &a, const Rect &b)
 class Basic
 {
 public:
+    Vec2 PointingAt;
     SDL_FRect rect;
     bool active = true;
     bool collidable = false;
@@ -323,12 +324,21 @@ public:
         int x, y;
         const Uint8 *k = SDL_GetKeyboardState(NULL);
         Uint32 m = SDL_GetMouseState(&x, &y);
+        PointingAt={(double)x,(double)y};
         if (m & SDL_BUTTON_LMASK)
         {
             auto ne = gun->shoot(x, y);
             for (auto i : ne)
             {
                 res.push_back(i);
+            }
+        }
+        if (m & SDL_BUTTON_RMASK){
+            SDL_FRect touchRect={(float)x, (float)y, 1, 1};
+            for (auto i:*sprites){
+                if (SDL_HasIntersectionF(&i->rect, &touchRect)){
+                    i->WhenParried(this);
+                }
             }
         }
         gun->update(dt);
@@ -372,6 +382,9 @@ public:
         SDL_SetRenderDrawColor(r, 0, 255, 0, 255);
         SDL_RenderFillRectF(r, &rect);
         return {};
+    }
+    void WhenParried(Basic* p) override{
+        active=false;
     }
 };
 
