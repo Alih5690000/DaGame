@@ -90,6 +90,9 @@ bool intersects(const Rect &a, const Rect &b)
     return true;
 }
 
+Vec2 plrDir;
+Vec2 plrPos;
+
 class Basic
 {
 public:
@@ -98,6 +101,7 @@ public:
     bool active = true;
     bool collidable = false;
     int hp = 100;
+    bool isEntity=false;
     std::vector<Basic *> *sprites;
     Basic(std::vector<Basic *> &s)
     {
@@ -113,6 +117,20 @@ public:
             rect.w * coefficient,
             rect.h * coefficient};
     }
+    bool isSeen() const
+    {
+        const Vec2 toObject = {
+            rect.x + rect.w / 2.0 - plrPos.x,
+            rect.y + rect.h / 2.0 - plrPos.y};
+        const Vec2 sight = plrDir - plrPos;
+        const double objectLength = std::sqrt(dot(toObject, toObject));
+        const double sightLength = std::sqrt(dot(sight, sight));
+        if (objectLength == 0.0 || sightLength == 0.0)
+            return false;
+        return dot(toObject, sight) >=
+               std::cos(70.0 / RAD_TO_DEG) * objectLength * sightLength;
+    }
+
     virtual void takedmg(int hp)
     {
         this->hp -= hp;
@@ -325,6 +343,8 @@ public:
         const Uint8 *k = SDL_GetKeyboardState(NULL);
         Uint32 m = SDL_GetMouseState(&x, &y);
         PointingAt={(double)x,(double)y};
+        plrDir={x,y};
+        plrPos = {rect.x + rect.w / 2.0, rect.y + rect.h / 2.0};
         if (m & SDL_BUTTON_LMASK)
         {
             auto ne = gun->shoot(x, y);
