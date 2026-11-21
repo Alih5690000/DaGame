@@ -145,8 +145,14 @@ public:
     Weapon(Basic *o) : owner(o) {}
     virtual std::vector<Basic *> shoot(float x, float y) = 0;
     virtual void reload() = 0;
-    virtual void update(float dt) = 0;
-    virtual void draw(SDL_Renderer *renderer, float x, float y)
+    virtual void update(SDL_Renderer *renderer, float dt, float x, float y) = 0;
+};
+
+class Gun : public Weapon
+{
+    using Weapon::Weapon;
+    void reload() override {}
+    void update(SDL_Renderer *renderer, float dt, float x, float y) override
     {
         const float centerX = owner->rect.x + owner->rect.w / 2.0f;
         const float centerY = owner->rect.y + owner->rect.h / 2.0f;
@@ -155,7 +161,7 @@ public:
         const float length = std::sqrt(dx * dx + dy * dy);
         if (length == 0.0f) return;
 
-        // Render a slim yellow barrel from the player's center toward the pointer.
+        // Draw the yellow gun barrel from the player's center toward the pointer.
         const float perpendicularX = -dy / length;
         const float perpendicularY = dx / length;
         Uint8 oldR, oldG, oldB, oldA;
@@ -169,13 +175,6 @@ public:
         }
         SDL_SetRenderDrawColor(renderer, oldR, oldG, oldB, oldA);
     }
-};
-
-class Gun : public Weapon
-{
-    using Weapon::Weapon;
-    void reload() override {}
-    void update(float dt) override {}
     std::vector<Basic *> shoot(float x, float y) override
     {
         std::vector<Basic *> res;
@@ -259,13 +258,12 @@ public:
             for (auto i:*sprites)
                 if (SDL_HasIntersectionF(&i->rect, &touchRect)) i->WhenParried(this);
         }
-        gun->update(dt);
         if (k[SDL_SCANCODE_W]) move(0, -200 * dt);
         if (k[SDL_SCANCODE_A]) move(-200 * dt, 0);
         if (k[SDL_SCANCODE_S]) move(0, 200 * dt);
         if (k[SDL_SCANCODE_D]) move(200 * dt, 0);
         SDL_RenderCopyF(r, txt, NULL, &rect);
-        gun->draw(r, static_cast<float>(x), static_cast<float>(y));
+        gun->update(r, dt, static_cast<float>(x), static_cast<float>(y));
         return res;
     }
     void takedmg(int hp) override
