@@ -286,7 +286,6 @@ class Gun : public Weapon
 class Player : public Basic
 {
     Weapon *gun = new Gun(this);
-    #warning txt is not initialized
     SDL_Texture* txt;
     void move(float dx, float dy)
     {
@@ -333,9 +332,17 @@ class Player : public Basic
     }
 
 public:
-    Player(SDL_FRect r, std::vector<Basic *> &s) : Basic(s)
+    Player(SDL_FRect r, std::vector<Basic *> &s, SDL_Renderer *renderer) : Basic(s)
     {
         rect = r;
+        txt = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
+                                SDL_TEXTUREACCESS_TARGET, rect.w, rect.h);
+        SDL_SetTextureBlendMode(txt, SDL_BLENDMODE_BLEND);
+        SDL_Texture *previousTarget = SDL_GetRenderTarget(renderer);
+        SDL_SetRenderTarget(renderer, txt);
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        SDL_RenderClear(renderer);
+        SDL_SetRenderTarget(renderer, previousTarget);
         collidable = true;
     }
     std::vector<Basic *> update(SDL_Renderer *r, float dt) override
@@ -381,7 +388,7 @@ public:
             move(200 * dt, 0);
         }
         float angle=atan2(x-rect.x,y-rect.y);
-        SDL_RenderCopyExF(r, txt, NULL, rect, 
+        SDL_RenderCopyExF(r, txt, NULL, &rect, 
             angle, NULL, SDL_FLIP_NONE);
         return res;
     }
@@ -609,7 +616,7 @@ void loop()
 
 void Init1()
 {
-    ss.push_back(new Player({1000 / 2, 800 / 2, 100, 100}, ss));
+    ss.push_back(new Player({1000 / 2, 800 / 2, 100, 100}, ss, renderer));
     ss.push_back(new Turret(ss[0], ss, {500, 500, 100, 100},
                             renderer));
     ss.push_back(new Brick({300, 300, 100, 100}, ss));
