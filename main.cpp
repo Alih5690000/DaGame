@@ -13,26 +13,12 @@ struct Vec2
 {
     double x, y;
 
-    Vec2 operator+(Vec2 b) const
-    {
-        return {x + b.x, y + b.y};
-    }
-
-    Vec2 operator-(Vec2 b) const
-    {
-        return {x - b.x, y - b.y};
-    }
-
-    Vec2 operator*(double s) const
-    {
-        return {x * s, y * s};
-    }
+    Vec2 operator+(Vec2 b) const { return {x + b.x, y + b.y}; }
+    Vec2 operator-(Vec2 b) const { return {x - b.x, y - b.y}; }
+    Vec2 operator*(double s) const { return {x * s, y * s}; }
 };
 
-double dot(Vec2 a, Vec2 b)
-{
-    return a.x * b.x + a.y * b.y;
-}
+double dot(Vec2 a, Vec2 b) { return a.x * b.x + a.y * b.y; }
 
 struct Rect
 {
@@ -43,50 +29,26 @@ struct Rect
 
 Rect CreateRect(SDL_FRect r, double angle)
 {
-    return {
-        {r.x + r.w / 2.0, r.y + r.h / 2.0},
-        r.w / 2.0,
-        r.h / 2.0,
-        angle};
+    return {{r.x + r.w / 2.0, r.y + r.h / 2.0}, r.w / 2.0, r.h / 2.0, angle};
 }
 
 bool intersects(const Rect &a, const Rect &b)
 {
-    Vec2 uA = {
-        std::cos(a.angle),
-        std::sin(a.angle)};
-
-    Vec2 vA = {
-        -std::sin(a.angle),
-        std::cos(a.angle)};
-
-    Vec2 uB = {
-        std::cos(b.angle),
-        std::sin(b.angle)};
-
-    Vec2 vB = {
-        -std::sin(b.angle),
-        std::cos(b.angle)};
-
+    Vec2 uA = {std::cos(a.angle), std::sin(a.angle)};
+    Vec2 vA = {-std::sin(a.angle), std::cos(a.angle)};
+    Vec2 uB = {std::cos(b.angle), std::sin(b.angle)};
+    Vec2 vB = {-std::sin(b.angle), std::cos(b.angle)};
     Vec2 axes[] = {uA, vA, uB, vB};
     Vec2 delta = b.center - a.center;
 
     for (Vec2 axis : axes)
     {
         double distance = std::abs(dot(delta, axis));
-
-        double radiusA =
-            a.halfW * std::abs(dot(uA, axis)) +
-            a.halfH * std::abs(dot(vA, axis));
-
-        double radiusB =
-            b.halfW * std::abs(dot(uB, axis)) +
-            b.halfH * std::abs(dot(vB, axis));
-
+        double radiusA = a.halfW * std::abs(dot(uA, axis)) + a.halfH * std::abs(dot(vA, axis));
+        double radiusB = b.halfW * std::abs(dot(uB, axis)) + b.halfH * std::abs(dot(vB, axis));
         if (distance > radiusA + radiusB)
             return false;
     }
-
     return true;
 }
 
@@ -103,95 +65,49 @@ public:
     int hp = 100;
     bool isEntity=false;
     std::vector<Basic *> *sprites;
-    Basic(std::vector<Basic *> &s)
-    {
-        sprites = &s;
-    }
+    Basic(std::vector<Basic *> &s) { sprites = &s; }
     SDL_FRect GetParryHitbox(float coefficient = 1.5f) const
     {
         const float widthIncrease = rect.w * (coefficient - 1.0f) / 2.0f;
         const float heightIncrease = rect.h * (coefficient - 1.0f) / 2.0f;
-        return {
-            rect.x - widthIncrease,
-            rect.y - heightIncrease,
-            rect.w * coefficient,
-            rect.h * coefficient};
+        return {rect.x - widthIncrease, rect.y - heightIncrease, rect.w * coefficient, rect.h * coefficient};
     }
     bool isSeen() const
     {
-        const Vec2 toObject = {
-            rect.x + rect.w / 2.0 - plrPos.x,
-            rect.y + rect.h / 2.0 - plrPos.y};
+        const Vec2 toObject = {rect.x + rect.w / 2.0 - plrPos.x, rect.y + rect.h / 2.0 - plrPos.y};
         const Vec2 sight = plrDir - plrPos;
         const double objectLength = std::sqrt(dot(toObject, toObject));
         const double sightLength = std::sqrt(dot(sight, sight));
         if (objectLength == 0.0 || sightLength == 0.0)
             return false;
-        return dot(toObject, sight) >=
-               std::cos(70.0 / RAD_TO_DEG) * objectLength * sightLength;
+        return dot(toObject, sight) >= std::cos(70.0 / RAD_TO_DEG) * objectLength * sightLength;
     }
-
-    virtual void takedmg(int hp)
-    {
-        this->hp -= hp;
-    }
+    virtual void takedmg(int hp) { this->hp -= hp; }
     virtual std::vector<Basic *> update(SDL_Renderer *, float dt) = 0;
     virtual ~Basic() = default;
     virtual void CallbackX(bool positive, Basic *i)
     {
-        if (positive)
-        {
-            rect.x = i->rect.x - i->rect.w;
-        }
-        else
-        {
-            rect.x = i->rect.x + i->rect.w;
-        }
+        if (positive) rect.x = i->rect.x - i->rect.w;
+        else rect.x = i->rect.x + i->rect.w;
     }
     virtual void CallbackY(bool positive, Basic *i)
     {
-        if (positive)
-        {
-            rect.y = i->rect.y - i->rect.h;
-        }
-        else
-        {
-            rect.y = i->rect.y + i->rect.h;
-        }
+        if (positive) rect.y = i->rect.y - i->rect.h;
+        else rect.y = i->rect.y + i->rect.h;
     }
     void HandleX(bool positive)
     {
         for (auto i : *sprites)
-        {
-            if (i->collidable && collidable && SDL_HasIntersectionF(&rect, &i->rect))
-            {
-                CallbackX(positive, i);
-            }
-        }
+            if (i->collidable && collidable && SDL_HasIntersectionF(&rect, &i->rect)) CallbackX(positive, i);
     }
-    void HandleX(int x)
-    {
-        bool p = x > 0;
-        HandleX(p);
-    }
+    void HandleX(int x) { HandleX(x > 0); }
     void HandleY(bool positive)
     {
         for (auto i : *sprites)
-        {
-            if (i->collidable && collidable && SDL_HasIntersectionF(&rect, &i->rect))
-            {
-                CallbackY(positive, i);
-            }
-        }
+            if (i->collidable && collidable && SDL_HasIntersectionF(&rect, &i->rect)) CallbackY(positive, i);
     }
-    void HandleY(int y)
-    {
-        bool p = y > 0;
-        HandleY(p);
-    }
-    virtual void WhenParried(Basic *)
-    {
-    }
+    void HandleY(int y) { HandleY(y > 0); }
+    virtual void WhenParried(Basic *) {}
 };
 
 class Bullet : public Basic
@@ -210,20 +126,11 @@ public:
         rect.x += dx * dt;
         rect.y += dy * dt;
         lifetime -= dt;
-        if (lifetime <= 0.f)
-        {
-            active = false;
-            return {};
-        }
+        if (lifetime <= 0.f) { active = false; return {}; }
         for (auto i : *sprites)
         {
-            if (i == shoo || !i->collidable)
-                continue;
-            if (SDL_HasIntersectionF(&rect, &i->rect))
-            {
-                i->active = false;
-                active = false;
-            }
+            if (i == shoo || !i->collidable) continue;
+            if (SDL_HasIntersectionF(&rect, &i->rect)) { i->active = false; active = false; }
         }
         SDL_SetRenderDrawColor(r, 255, 0, 0, 255);
         SDL_RenderFillRectF(r, &rect);
@@ -239,45 +146,50 @@ public:
     virtual std::vector<Basic *> shoot(float x, float y) = 0;
     virtual void reload() = 0;
     virtual void update(float dt) = 0;
+    virtual void draw(SDL_Renderer *renderer, float x, float y)
+    {
+        const float centerX = owner->rect.x + owner->rect.w / 2.0f;
+        const float centerY = owner->rect.y + owner->rect.h / 2.0f;
+        const float dx = x - centerX;
+        const float dy = y - centerY;
+        const float length = std::sqrt(dx * dx + dy * dy);
+        if (length == 0.0f) return;
+
+        // Render a slim yellow barrel from the player's center toward the pointer.
+        const float perpendicularX = -dy / length;
+        const float perpendicularY = dx / length;
+        Uint8 oldR, oldG, oldB, oldA;
+        SDL_GetRenderDrawColor(renderer, &oldR, &oldG, &oldB, &oldA);
+        SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
+        for (int offset = -3; offset <= 3; ++offset)
+        {
+            const float ox = perpendicularX * offset;
+            const float oy = perpendicularY * offset;
+            SDL_RenderDrawLineF(renderer, centerX + ox, centerY + oy, x + ox, y + oy);
+        }
+        SDL_SetRenderDrawColor(renderer, oldR, oldG, oldB, oldA);
+    }
 };
 
 class Gun : public Weapon
 {
     using Weapon::Weapon;
-    void reload() override
-    {
-    }
-    void update(float dt) override
-    {
-    }
+    void reload() override {}
+    void update(float dt) override {}
     std::vector<Basic *> shoot(float x, float y) override
     {
         std::vector<Basic *> res;
         float px = owner->rect.x + owner->rect.w / 2.0f;
         float py = owner->rect.y + owner->rect.h / 2.0f;
-
         float dx = x - px;
         float dy = y - py;
-
         float len = std::sqrt(dx * dx + dy * dy);
-
         if (len > 0.0f)
         {
             dx /= len;
             dy /= len;
-
-            SDL_FRect bulletRect = {
-                px - 5.0f,
-                py - 5.0f,
-                10.0f,
-                10.0f};
-
-            res.push_back(new Bullet(
-                *owner->sprites,
-                dx * 600.0f,
-                dy * 600.0f,
-                bulletRect,
-                2.0f, owner));
+            SDL_FRect bulletRect = {px - 5.0f, py - 5.0f, 10.0f, 10.0f};
+            res.push_back(new Bullet(*owner->sprites, dx * 600.0f, dy * 600.0f, bulletRect, 2.0f, owner));
         }
         return res;
     }
@@ -293,50 +205,32 @@ class Player : public Basic
         float offX = 0, offY = 0;
         for (auto i : *sprites)
         {
-            if (i == this)
-                continue;
+            if (i == this) continue;
             moved.push_back(i);
             i->rect.x -= dx;
             if (SDL_HasIntersectionF(&rect, &i->rect) && i->collidable)
             {
-                if (dx > 0)
-                {
-                    offX = (rect.x + rect.w) - i->rect.x;
-                }
-                else if (dx < 0)
-                {
-                    offX = rect.x - (i->rect.x + i->rect.w);
-                }
+                if (dx > 0) offX = (rect.x + rect.w) - i->rect.x;
+                else if (dx < 0) offX = rect.x - (i->rect.x + i->rect.w);
                 goto end;
             }
             i->rect.y -= dy;
             if (SDL_HasIntersectionF(&rect, &i->rect) && i->collidable)
             {
-                if (dy > 0)
-                {
-                    offY = (rect.y + rect.h) - i->rect.y;
-                }
-                else if (dy < 0)
-                {
-                    offY = rect.y - (i->rect.y + i->rect.h);
-                }
+                if (dy > 0) offY = (rect.y + rect.h) - i->rect.y;
+                else if (dy < 0) offY = rect.y - (i->rect.y + i->rect.h);
                 goto end;
             }
         }
     end:
-        for (auto i : moved)
-        {
-            i->rect.x += offX;
-            i->rect.y += offY;
-        }
+        for (auto i : moved) { i->rect.x += offX; i->rect.y += offY; }
     }
 
 public:
     Player(SDL_FRect r, std::vector<Basic *> &s, SDL_Renderer *renderer) : Basic(s)
     {
         rect = r;
-        txt = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888,
-                                SDL_TEXTUREACCESS_TARGET, rect.w, rect.h);
+        txt = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, rect.w, rect.h);
         SDL_SetTextureBlendMode(txt, SDL_BLENDMODE_BLEND);
         SDL_Texture *previousTarget = SDL_GetRenderTarget(renderer);
         SDL_SetRenderTarget(renderer, txt);
@@ -357,39 +251,21 @@ public:
         if (m & SDL_BUTTON_LMASK)
         {
             auto ne = gun->shoot(x, y);
-            for (auto i : ne)
-            {
-                res.push_back(i);
-            }
+            for (auto i : ne) res.push_back(i);
         }
-        if (m & SDL_BUTTON_RMASK){
+        if (m & SDL_BUTTON_RMASK)
+        {
             SDL_FRect touchRect={(float)x, (float)y, 1, 1};
-            for (auto i:*sprites){
-                if (SDL_HasIntersectionF(&i->rect, &touchRect)){
-                    i->WhenParried(this);
-                }
-            }
+            for (auto i:*sprites)
+                if (SDL_HasIntersectionF(&i->rect, &touchRect)) i->WhenParried(this);
         }
         gun->update(dt);
-        if (k[SDL_SCANCODE_W])
-        {
-            move(0, -200 * dt);
-        }
-        if (k[SDL_SCANCODE_A])
-        {
-            move(-200 * dt, 0);
-        }
-        if (k[SDL_SCANCODE_S])
-        {
-            move(0, 200 * dt);
-        }
-        if (k[SDL_SCANCODE_D])
-        {
-            move(200 * dt, 0);
-        }
-        float angle=atan2(x-rect.x,y-rect.y);
-        SDL_RenderCopyExF(r, txt, NULL, &rect, 
-            angle, NULL, SDL_FLIP_NONE);
+        if (k[SDL_SCANCODE_W]) move(0, -200 * dt);
+        if (k[SDL_SCANCODE_A]) move(-200 * dt, 0);
+        if (k[SDL_SCANCODE_S]) move(0, 200 * dt);
+        if (k[SDL_SCANCODE_D]) move(200 * dt, 0);
+        SDL_RenderCopyF(r, txt, NULL, &rect);
+        gun->draw(r, static_cast<float>(x), static_cast<float>(y));
         return res;
     }
     void takedmg(int hp) override
@@ -402,20 +278,14 @@ public:
 class Brick : public Basic
 {
 public:
-    Brick(SDL_FRect r, std::vector<Basic *> &s) : Basic(s)
-    {
-        rect = r;
-        collidable = true;
-    }
+    Brick(SDL_FRect r, std::vector<Basic *> &s) : Basic(s) { rect = r; collidable = true; }
     std::vector<Basic *> update(SDL_Renderer *r, float dt) override
     {
         SDL_SetRenderDrawColor(r, 0, 255, 0, 255);
         SDL_RenderFillRectF(r, &rect);
         return {};
     }
-    void WhenParried(Basic* p) override{
-        active=false;
-    }
+    void WhenParried(Basic* p) override { active=false; }
 };
 
 class Beam : public Basic
@@ -432,14 +302,7 @@ public:
     bool *f;
     Beam(float angle, std::vector<Basic *> &ss, float l, SDL_FRect r, SDL_Texture *tt, float h, float d, bool *f) : Basic(ss), lifetime(l)
     {
-        rect = r;
-        t = tt;
-        this->f = f;
-        *f=false;
-        this->angle = angle;
-        heatUp = h;
-        damagetime = d;
-        collidable = false;
+        rect = r; t = tt; this->f = f; *f=false; this->angle = angle; heatUp = h; damagetime = d; collidable = false;
     }
     std::vector<Basic *> update(SDL_Renderer *r, float dt)
     {
@@ -447,39 +310,23 @@ public:
         if (heatUp > 0.f)
         {
             SDL_SetTextureAlphaMod(t, 128);
-            SDL_RenderCopyExF(r, t, NULL, &rect,
-                              angle * RAD_TO_DEG, &center, SDL_FLIP_NONE);
+            SDL_RenderCopyExF(r, t, NULL, &rect, angle * RAD_TO_DEG, &center, SDL_FLIP_NONE);
             heatUp -= dt;
             return {};
         }
-        if (damaging)
-        {
-            if (damagetime <= 0.f)
-                damaging = false;
-            damagetime -= dt;
-        }
+        if (damaging) { if (damagetime <= 0.f) damaging = false; damagetime -= dt; }
         if (timerOn)
         {
             lifetime -= dt;
-            if (lifetime <= 0.f)
-            {
-                active = false;
-                return {};
-            }
+            if (lifetime <= 0.f) { active = false; return {}; }
         }
         if (damaging)
             for (auto i : *sprites)
             {
                 Rect ai = CreateRect(i->rect, 0);
                 Vec2 dir = {std::cos(angle), std::sin(angle)};
-                Rect me = {
-                    {rect.x + dir.x * rect.w / 2.0,
-                     rect.y + rect.h / 2.0 + dir.y * rect.w / 2.0},
-                    rect.w / 2.0,
-                    rect.h / 2.0,
-                    angle};
-                if (intersects(ai, me) && i != this &&
-                    (guys.find(i) == guys.end() || guys[i] <= 0.f))
+                Rect me = {{rect.x + dir.x * rect.w / 2.0, rect.y + rect.h / 2.0 + dir.y * rect.w / 2.0}, rect.w / 2.0, rect.h / 2.0, angle};
+                if (intersects(ai, me) && i != this && (guys.find(i) == guys.end() || guys[i] <= 0.f))
                 {
                     EM_LOG("Hit");
                     i->takedmg(50);
@@ -487,14 +334,10 @@ public:
                 }
             }
         SDL_SetTextureAlphaMod(t, 255);
-        SDL_RenderCopyExF(r, t, NULL, &rect,
-                          angle * RAD_TO_DEG, &center, SDL_FLIP_NONE);
+        SDL_RenderCopyExF(r, t, NULL, &rect, angle * RAD_TO_DEG, &center, SDL_FLIP_NONE);
         return {};
     }
-    ~Beam()
-    {
-        *f = true;
-    }
+    ~Beam() { *f = true; }
 };
 
 class Turret : public Basic
@@ -510,12 +353,10 @@ public:
     SDL_Texture *txt;
     Beam *b;
     bool dead = false;
-    Turret(Basic *target, std::vector<Basic *> &s, SDL_FRect r,
-           SDL_Renderer *re) : t(target), Basic(s)
+    Turret(Basic *target, std::vector<Basic *> &s, SDL_FRect r, SDL_Renderer *re) : t(target), Basic(s)
     {
         rect = r;
-        txt = SDL_CreateTexture(re, SDL_PIXELFORMAT_RGBA8888,
-                                SDL_TEXTUREACCESS_TARGET, rect.w, rect.h);
+        txt = SDL_CreateTexture(re, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, rect.w, rect.h);
         SDL_SetTextureBlendMode(txt, SDL_BLENDMODE_BLEND);
         SDL_Texture *prev = SDL_GetRenderTarget(re);
         SDL_SetRenderTarget(re, txt);
@@ -531,45 +372,30 @@ public:
         float dy = (t->rect.y + t->rect.h / 2.f) - (rect.y + rect.h / 2.f);
         float angle = SDL_atan2f(dy, dx);
         float dist = SDL_sqrtf(dx * dx + dy * dy);
-        SDL_FRect trail = {
-            rect.x + rect.w / 2.f,
-            rect.y + rect.h / 2.f - 5.f,
-            dist,
-            10.f};
+        SDL_FRect trail = {rect.x + rect.w / 2.f, rect.y + rect.h / 2.f - 5.f, dist, 10.f};
         SDL_FPoint center = {0, trail.h / 2};
-        cd -= dt;
-        cool -= dt;
+        cd -= dt; cool -= dt;
         if (cd > 0)
         {
             if (cool <= 0.f)
             {
                 SDL_SetTextureAlphaMod(txt, 128);
-                SDL_RenderCopyExF(r, txt, NULL, &trail,
-                                  angle * RAD_TO_DEG, &center, SDL_FLIP_NONE);
+                SDL_RenderCopyExF(r, txt, NULL, &trail, angle * RAD_TO_DEG, &center, SDL_FLIP_NONE);
             }
         }
         else
         {
-            lastAngle = angle;
-            lastRect = trail;
-            dead = false;
+            lastAngle = angle; lastRect = trail; dead = false;
             b = new Beam(lastAngle, *sprites, 1.f, lastRect, txt, 1.5f, 0.001f, &dead);
-            p.push_back(b);
-            cd = CD;
-            cool = 2.5f;
+            p.push_back(b); cd = CD; cool = 2.5f;
         }
         return p;
     }
-    ~Turret()
-    {
-        if (!dead)
-            b->active = false;
-    }
+    ~Turret() { if (!dead) b->active = false; }
 };
 
 SDL_Renderer *renderer;
 SDL_Window *window;
-
 std::vector<Basic *> ss;
 float dt;
 int start, end;
@@ -580,13 +406,7 @@ void loop()
     dt = (start - end) / 1000.f;
     end = start;
     SDL_Event e;
-    while (SDL_PollEvent(&e))
-    {
-        if (e.type == SDL_QUIT)
-        {
-            emscripten_cancel_main_loop();
-        }
-    }
+    while (SDL_PollEvent(&e)) if (e.type == SDL_QUIT) emscripten_cancel_main_loop();
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
     std::vector<Basic *> n;
@@ -594,42 +414,27 @@ void loop()
     for (auto i : ss)
     {
         auto k = i->update(renderer, dt);
-        for (auto j : k)
-        {
-            pending.push_back(j);
-        }
-        if (i->active)
-        {
-            n.push_back(i);
-        }
-        else{
-            delete i;
-        }
+        for (auto j : k) pending.push_back(j);
+        if (i->active) n.push_back(i);
+        else delete i;
     }
     ss = n;
-    for (auto i : pending)
-    {
-        ss.push_back(i);
-    }
+    for (auto i : pending) ss.push_back(i);
     SDL_RenderPresent(renderer);
 }
 
 void Init1()
 {
     ss.push_back(new Player({1000 / 2, 800 / 2, 100, 100}, ss, renderer));
-    ss.push_back(new Turret(ss[0], ss, {500, 500, 100, 100},
-                            renderer));
+    ss.push_back(new Turret(ss[0], ss, {500, 500, 100, 100}, renderer));
     ss.push_back(new Brick({300, 300, 100, 100}, ss));
 }
 
 int main()
 {
     SDL_Init(SDL_INIT_EVERYTHING);
-    window = SDL_CreateWindow("Game",
-                              SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                              1000, 800, SDL_WINDOW_SHOWN);
-    renderer = SDL_CreateRenderer(window, -1,
-                                  SDL_RENDERER_ACCELERATED);
+    window = SDL_CreateWindow("Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1000, 800, SDL_WINDOW_SHOWN);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     Init1();
     emscripten_set_main_loop(loop, -1, 1);
 }
