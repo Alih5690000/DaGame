@@ -286,6 +286,8 @@ class Gun : public Weapon
 class Player : public Basic
 {
     Weapon *gun = new Gun(this);
+    #warning txt is not initialized
+    SDL_Texture* txt;
     void move(float dx, float dy)
     {
         std::vector<Basic *> moved;
@@ -378,8 +380,9 @@ public:
         {
             move(200 * dt, 0);
         }
-        SDL_SetRenderDrawColor(r, 255, 0, 0, 255);
-        SDL_RenderFillRectF(r, &rect);
+        float angle=atan2(x-rect.x,y-rect.y);
+        SDL_RenderCopyExF(r, txt, NULL, rect, 
+            angle, NULL, SDL_FLIP_NONE);
         return res;
     }
     void takedmg(int hp) override
